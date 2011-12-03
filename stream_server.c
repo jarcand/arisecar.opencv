@@ -161,10 +161,10 @@ void* streamServer(void* arg)
 void quit(char* msg, int retval)
 {
     if (retval == 0) {
-        fprintf(stdout, (msg == NULL ? "" : msg));
+        fprintf(stdout, "%s", (msg == NULL ? "" : msg));
         fprintf(stdout, "\n");
     } else {
-        fprintf(stderr, (msg == NULL ? "" : msg));
+        fprintf(stderr, "%s", (msg == NULL ? "" : msg));
         fprintf(stderr, "\n");
     }
  
