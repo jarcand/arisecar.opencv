@@ -13,6 +13,8 @@
 CvCapture*  capture;
 IplImage*   img0;
 IplImage*   img1;
+IplImage*   source; 
+IplImage*   destination;
 int         is_data_ready = 0;
 int         serversock, clientsock;
  
@@ -25,9 +27,16 @@ int main(int argc, char** argv)
 {
     pthread_t   thread_s;
     int         key;
+    int flag =  0;
  
     if (argc == 2) {
-        capture = cvCaptureFromFile(argv[1]);
+        
+            flag = 1;
+        
+        capture = cvCaptureFromCAM(0);
+        
+        //capture = cvCaptureFromFile(argv[1]);
+        
     } else {
         capture = cvCaptureFromCAM(0);
     }
@@ -36,14 +45,42 @@ int main(int argc, char** argv)
         quit("cvCapture failed", 1);
     }
  
-    img0 = cvQueryFrame(capture);
-    img1 = cvCreateImage(cvGetSize(img0), IPL_DEPTH_8U, 1);
+
+
+    //cvQueryFrame(capture);
+     //capture = cvCreateCameraCapture(-1);
+
+
+
+    //cvSetCaptureProperty( capture, CV_CAP_PROP_FRAME_WIDTH, 320);
+    //cvSetCaptureProperty( capture, CV_CAP_PROP_FRAME_HEIGHT, 240);
+   
+        img0 = cvQueryFrame(capture);
+
+// Create an IplImage object *image 
+source = img0;
+
+
+// declare a destination IplImage object with correct size, depth and channels
+     destination = cvCreateImage
+( cvSize((int)(source->width/2) , (int)(source->height/2) ),
+                                     source->depth, source->nChannels );
+
+//use cvResize to resize source to a destination image
+cvResize(source, destination,CV_INTER_LINEAR);
+
+
+
+
+
+
+    img1 = cvCreateImage(cvGetSize(destination), IPL_DEPTH_8U, 1);
  
     cvZero(img1);
     cvNamedWindow("stream_server", CV_WINDOW_AUTOSIZE);
  
     /* print the width and height of the frame, needed by the client */
-    fprintf(stdout, "width:  %d\nheight: %d\n\n", img0->width, img0->height);
+    fprintf(stdout, "width:  %d\nheight: %d\n\n", destination->width, destination->height);
     fprintf(stdout, "Press 'q' to quit.\n\n");
  
     /* run the streaming server as a separate thread */
@@ -55,9 +92,21 @@ int main(int argc, char** argv)
         /* get a frame from camera */
         img0 = cvQueryFrame(capture);
         if (!img0) break;
- 
-        img0->origin = 0;
-        cvFlip(img0, img0, -1);
+
+        // Create an IplImage object *image 
+        source = img0;
+
+
+        // declare a destination IplImage object with correct size, depth and channels
+             destination = cvCreateImage
+        ( cvSize((int)(source->width/2) , (int)(source->height/2) ),
+                                     source->depth, source->nChannels );
+
+        //use cvResize to resize source to a destination image
+        cvResize(source, destination,CV_INTER_LINEAR);
+        
+        destination->origin = 0;
+        //cvFlip(img0, img0, -1);
  
         /**
          * convert to grayscale 
@@ -65,15 +114,17 @@ int main(int argc, char** argv)
          * so we enclose it with pthread_mutex_lock to make it thread safe 
          */
         pthread_mutex_lock(&mutex);
-        cvCvtColor(img0, img1, CV_BGR2GRAY);
+        cvCvtColor(destination, img1, CV_BGR2GRAY);
         is_data_ready = 1;
         pthread_mutex_unlock(&mutex);
  
         /* also display the video here on server */
-        cvShowImage("stream_server", img0);
-        key = cvWaitKey(30);
-    }
+        if(flag>0){
+            cvShowImage("stream_server", destination);
+            key = cvWaitKey(30);
+        }
  
+    }
     /* user has pressed 'q', terminate the streaming server */
     if (pthread_cancel(thread_s)) {
         quit("pthread_cancel failed.", 1);
@@ -151,7 +202,7 @@ void* streamServer(void* arg)
         pthread_testcancel();
  
         /* no, take a rest for a while */
-        usleep(1000);
+        //usleep(1000);
     }
 }
  
@@ -161,10 +212,10 @@ void* streamServer(void* arg)
 void quit(char* msg, int retval)
 {
     if (retval == 0) {
-        fprintf(stdout, "%s", (msg == NULL ? "" : msg));
+        //fprintf(stdout, "%s", (msg == NULL ? "" : msg));
         fprintf(stdout, "\n");
     } else {
-        fprintf(stderr, "%s", (msg == NULL ? "" : msg));
+        //fprintf(stderr, "%s", (msg == NULL ? "" : msg));
         fprintf(stderr, "\n");
     }
  

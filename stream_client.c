@@ -128,7 +128,7 @@ void* streamClient(void* arg)
         pthread_testcancel();
  
         /* no, take a rest for a while */
-        usleep(1000);
+        //usleep(1000);
     }
 }
  
@@ -138,10 +138,10 @@ void* streamClient(void* arg)
 void quit(char* msg, int retval)
 {
     if (retval == 0) {
-        fprintf(stdout, "%s", (msg == NULL ? "" : msg));
+        //fprintf(stdout, "%s", (msg == NULL ? "" : msg));
         fprintf(stdout, "\n");
     } else {
-        fprintf(stderr, "%s", (msg == NULL ? "" : msg));
+        //fprintf(stderr, "%s", (msg == NULL ? "" : msg));
         fprintf(stderr, "\n");
     }
  
